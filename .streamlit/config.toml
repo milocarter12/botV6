@@ -1,10 +1,15 @@
 [server]
 headless = true
-enableCORS = true
 address = "0.0.0.0"
+port = 5000
+enableCORS = true
 
 [theme]
 primaryColor = "#2196F3"
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F0F2F6"
 textColor = "#262730"
+
+[logger]
+level = "info"
+messageFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
