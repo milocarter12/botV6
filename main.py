@@ -15,21 +15,36 @@ from google_drive_service import GoogleDriveService
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('ExcelTransferBot')
 
-# Set page configuration first, before any other Streamlit commands
-st.set_page_config(
-    page_title="Excel Data Transfer Bot",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Health check endpoint
+def health_check():
+    return {"status": "healthy", "timestamp": datetime.datetime.now().isoformat()}
+
+# Error handler for server startup
+def handle_server_startup():
+    try:
+        # Set page configuration first, before any other Streamlit commands
+        st.set_page_config(
+            page_title="Excel Data Transfer Bot",
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Failed to start Streamlit server: {str(e)}")
+        return False
 
 # Initialize Google Drive Service
 drive_service = GoogleDriveService()
 
 # Load custom CSS
 def load_css() -> None:
-    css_file = Path(__file__).parent / "styles.css"
-    with open(css_file) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    try:
+        css_file = Path(__file__).parent / "styles.css"
+        with open(css_file) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except Exception as e:
+        logger.error(f"Failed to load CSS: {str(e)}")
+        st.warning("Custom styling could not be loaded")
 
 # Get the current directory of the script
 current_dir = Path(__file__).parent
@@ -131,9 +146,19 @@ def create_download_button(filepath: Path, filename: str, key_suffix: str = "") 
         st.error(f"❌ Error creating download button: {str(e)}")
 
 def main():
+    # Initialize server and handle startup errors
+    if not handle_server_startup():
+        st.error("Failed to start the application. Please try again later.")
+        return
+
     try:
         # Load custom CSS
         load_css()
+
+        # Add health check endpoint
+        if st.experimental_get_query_params().get("health") == ["check"]:
+            st.json(health_check())
+            return
 
         # Title only
         st.title('Excel Data Transfer Bot')
