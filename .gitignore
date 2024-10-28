@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+.env.*
+*.env
+
+# Google service account and client secret files
+*.json
+!package.json
+!package-lock.json
+
+# Generated files
+generated_files/
+generated_files_log.json
+
+# Replit specific
+.upm/
+.config/
+.replit
+replit.nix
+
+# VSCode
+.vscode/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Excel temporary files
+~$*.xlsx
+*.xlk
