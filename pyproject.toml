@@ -1,36 +1,19 @@
 [tool.poetry]
 name = "excel-data-transfer-bot"
 version = "1.0.0"
-description = "A Streamlit application that automates the process of transferring CSV data to formatted Excel templates with Google Drive integration"
-authors = ["Your Name <your.email@example.com>"]
-readme = "README.md"
+description = "Excel Data Transfer Bot using Streamlit for CSV to Excel template automation"
+authors = ["Excel Bot Team"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-streamlit = "*"
-pandas = "*"
-openpyxl = "*"
-google-auth = "*"
-google-auth-oauthlib = "*"
-google-auth-httplib2 = "*"
-google-api-python-client = "*"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.0"
-black = "^22.0"
-flake8 = "^4.0"
-mypy = "^1.0"
+python = ">=3.9.0,<4.0.0,!=3.9.7"
+streamlit = "1.29.0"
+pandas = "2.1.4"
+openpyxl = "3.1.2"
+google-auth = "2.25.2"
+google-auth-oauthlib = "1.1.0"
+google-auth-httplib2 = "0.1.1"
+google-api-python-client = "2.111.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
