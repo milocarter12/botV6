@@ -15,253 +15,148 @@ from google_drive_service import GoogleDriveService
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('ExcelTransferBot')
 
-# Health check endpoint
+# Health check endpoint for cloud deployment
+@st.cache_data
 def health_check():
-    return {"status": "healthy", "timestamp": datetime.datetime.now().isoformat()}
-
-# Error handler for server startup
-def handle_server_startup():
+    """Health check endpoint for cloud deployment"""
     try:
-        # Set page configuration first, before any other Streamlit commands
+        return {
+            "status": "healthy",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "service": "Excel Data Transfer Bot",
+            "environment": "cloud"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+
+def main():
+    try:
+        # Set page configuration
         st.set_page_config(
             page_title="Excel Data Transfer Bot",
             layout="wide",
             initial_sidebar_state="expanded"
         )
-        return True
-    except Exception as e:
-        logger.error(f"Failed to start Streamlit server: {str(e)}")
-        return False
 
-# Initialize Google Drive Service
-drive_service = GoogleDriveService()
+        # Display health check status
+        if st.sidebar.checkbox("Show Health Status", value=False):
+            st.sidebar.json(health_check())
 
-# Load custom CSS
-def load_css() -> None:
-    try:
-        css_file = Path(__file__).parent / "styles.css"
-        with open(css_file) as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except Exception as e:
-        logger.error(f"Failed to load CSS: {str(e)}")
-        st.warning("Custom styling could not be loaded")
-
-# Get the current directory of the script
-current_dir = Path(__file__).parent
-TEMPLATE_PATH = current_dir / 'BC CALC (4).xlsx'
-LOG_PATH = current_dir / 'generated_files_log.json'
-STORAGE_DIR = current_dir / 'generated_files'
-
-# Create storage directory if it doesn't exist
-STORAGE_DIR.mkdir(exist_ok=True)
-logger.info(f"Storage directory initialized at: {STORAGE_DIR}")
-
-def get_stored_file_path(filename: str) -> Path:
-    """Get the persistent path for a stored file."""
-    return STORAGE_DIR / filename
-
-def extract_data(df: pd.DataFrame, possible_column_names: List[str], 
-                start_row: int, column_letter: str, worksheet: Any) -> None:
-    """Extract data from DataFrame and write to worksheet."""
-    try:
-        for column_name in possible_column_names:
-            matching_columns = [col for col in df.columns if column_name in col.lower()]
-            if matching_columns:
-                data = df[matching_columns[0]].iloc[:10].tolist()
-                for i, value in enumerate(data):
-                    worksheet[f"{column_letter}{start_row + i}"] = value
-                return
-    except Exception as e:
-        logger.error(f"Error in extract_data: {str(e)}")
-        raise
-
-def format_currency_cells(worksheet: Any, column: str, start_row: int, end_row: int) -> None:
-    """Format cells as currency."""
-    try:
-        for i in range(start_row, end_row):
-            cell = worksheet[f"{column}{i}"]
-            if cell.value is not None:
-                try:
-                    cleaned_value = str(cell.value).replace(",", "")
-                    numeric_value = float(cleaned_value)
-                    cell.value = numeric_value
-                    cell.number_format = '$#,##0.00'
-                except ValueError:
-                    logger.warning(f"Cell {column}{i} contains non-numeric data: {cell.value}")
-                    st.warning(f"⚠️ Cell {column}{i} contains non-numeric data: {cell.value}")
-    except Exception as e:
-        logger.error(f"Error in format_currency_cells: {str(e)}")
-        raise
-
-def update_log(keyword: str, output_filename: str, today: str, file_id: Optional[str] = None) -> None:
-    """Update the log file with new entry."""
-    try:
-        storage_path = str(get_stored_file_path(output_filename))
-        logger.info(f"Updating log with file: {output_filename}, storage path: {storage_path}")
-        
-        log_entry = {
-            "keyword": keyword,
-            "filename": output_filename,
-            "timestamp": today,
-            "storage_path": storage_path
-        }
-        if file_id:
-            log_entry["drive_file_id"] = file_id
-            
-        log_data = []
-        if LOG_PATH.exists():
-            with open(LOG_PATH, "r") as log_file:
-                log_data = json.load(log_file)
-        log_data.append(log_entry)
-        with open(LOG_PATH, "w") as log_file:
-            json.dump(log_data, log_file, indent=4)
-        logger.info(f"Log updated successfully with entry: {log_entry}")
-    except Exception as e:
-        logger.error(f"Error updating log: {str(e)}")
-        raise
-
-def create_download_button(filepath: Path, filename: str, key_suffix: str = "") -> None:
-    """Create a download button for a file."""
-    try:
-        logger.info(f"Creating download button for file: {filepath}")
-        if not isinstance(filepath, Path):
-            filepath = Path(filepath)
-            
-        if not filepath.is_file():
-            logger.error(f"File not found or is not a file: {filepath}")
-            return
-            
-        with open(filepath, "rb") as file:
-            unique_key = f"download_{filename}_{key_suffix}" if key_suffix else f"download_{filename}"
-            st.download_button(
-                label="📥 Download Excel File",
-                data=file,
-                file_name=filename,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key=unique_key
-            )
-        logger.info(f"Download button created successfully for file: {filename}")
-    except Exception as e:
-        logger.error(f"Error creating download button: {str(e)}")
-        st.error(f"❌ Error creating download button: {str(e)}")
-
-def main():
-    # Initialize server and handle startup errors
-    if not handle_server_startup():
-        st.error("Failed to start the application. Please try again later.")
-        return
-
-    try:
-        # Load custom CSS
-        load_css()
-
-        # Add health check endpoint
-        if st.experimental_get_query_params().get("health") == ["check"]:
-            st.json(health_check())
-            return
-
-        # Title only
+        # Title
         st.title('Excel Data Transfer Bot')
 
-        # Authenticate with Google Drive
+        # Initialize Google Drive service
+        drive_service = GoogleDriveService()
         auth_success, auth_message = drive_service.authenticate()
+        
         if not auth_success:
-            st.error(f"❌ Google Drive Authentication Failed: {auth_message}")
+            st.error(f"Failed to authenticate with Google Drive: {auth_message}")
             return
 
-        # User inputs
-        col1, col2 = st.columns(2)
-        with col1:
-            keyword = st.text_input('Enter the keyword for the output filename:',
-                                help="This will be used in the output filename")
-        
-        with col2:
-            uploaded_file = st.file_uploader(
-                "Upload your CSV file",
-                type=["csv"],
-                help="Upload a CSV file containing your data"
-            )
+        # Step 1: User inputs keyword
+        keyword = st.text_input('Enter the keyword for the output filename:', key='keyword_input')
 
-        # Generate button
+        # Step 2: User uploads CSV file
+        uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"], key='file_upload')
+
+        # Step 3: Generate button for user to initiate generation
         if st.button("Generate", key='generate_button'):
             if not keyword:
-                st.error("⚠️ Please enter a keyword before generating.")
-                return
-            if not uploaded_file:
-                st.error("⚠️ Please upload a CSV file before generating.")
-                return
-            
-            try:
-                # Process the file
-                today = datetime.datetime.now().strftime("%Y-%m-%d")
-                output_filename = f"{keyword}_{today}.xlsx"
-                output_filepath = get_stored_file_path(output_filename)
-                
-                logger.info(f"Processing file: {output_filename}")
-                logger.info(f"Output filepath: {output_filepath}")
+                st.warning("Please enter a keyword before generating.")
+            elif not uploaded_file:
+                st.warning("Please upload a CSV file before generating.")
+            else:
+                try:
+                    # Create output directory if it doesn't exist
+                    output_dir = Path("generated_files")
+                    output_dir.mkdir(exist_ok=True)
 
-                # Load and process data
-                input_df = pd.read_csv(uploaded_file)
-                shutil.copy(TEMPLATE_PATH, output_filepath)
-                logger.info(f"Template copied to: {output_filepath}")
-                
-                workbook = openpyxl.load_workbook(output_filepath)
-                worksheet = workbook.active
+                    # Extract today's date for the output file name
+                    today = datetime.datetime.now().strftime("%Y-%m-%d")
+                    output_filename = f"{keyword}_{today}.xlsx"
+                    output_filepath = output_dir / output_filename
 
-                # Extract and write data
-                extract_data(input_df, ['product details', 'product'], 4, 'F', worksheet)
-                extract_data(input_df, ['brand'], 4, 'G', worksheet)
-                extract_data(input_df, ['price'], 4, 'H', worksheet)
-                extract_data(input_df, ['revenue'], 4, 'I', worksheet)
-
-                # Format currency cells
-                format_currency_cells(worksheet, 'I', 4, 14)
-                
-                # Save workbook to persistent storage
-                workbook.save(output_filepath)
-                logger.info(f"Excel file saved to persistent storage: {output_filepath}")
-                
-                # Upload to Google Drive
-                logger.info("Starting Google Drive upload")
-                file_id = drive_service.upload_file(str(output_filepath), output_filename)
-                
-                if not file_id:
-                    st.error("❌ Failed to upload file to Google Drive")
-                    logger.error("Failed to upload file to Google Drive")
-                else:
-                    # Update log with persistent storage path and file ID
-                    update_log(keyword, output_filename, today, file_id)
+                    # Load the input CSV file into a pandas DataFrame
+                    input_df = pd.read_csv(uploaded_file)
                     
-                    # Show success message and create single download button
-                    st.success('✅ File generated and uploaded successfully!')
-                    create_download_button(output_filepath, output_filename, key_suffix=today)
+                    # Copy the template file to create a new file
+                    template_path = Path("BC CALC (4).xlsx")
+                    shutil.copy(template_path, output_filepath)
+                    
+                    # Open the new file using openpyxl
+                    workbook = openpyxl.load_workbook(output_filepath)
+                    worksheet = workbook.active
 
-            except Exception as e:
-                error_msg = f"❌ An error occurred while processing the file: {str(e)}"
-                logger.error(error_msg)
-                st.error(error_msg)
-                st.error("Please check your CSV file format and try again.")
+                    # Helper function to extract data based on column name
+                    def extract_data(df, possible_column_names, start_row, column_letter):
+                        for column_name in possible_column_names:
+                            matching_columns = [col for col in df.columns if column_name in col.lower()]
+                            if matching_columns:
+                                data = df[matching_columns[0]].iloc[:10].tolist()
+                                for i, value in enumerate(data):
+                                    worksheet[f"{column_letter}{start_row + i}"] = value
+                                return
 
-        # Simplified sidebar with log (no download buttons)
-        st.sidebar.title("📋 Generated Files Log")
-        if LOG_PATH.exists():
-            with open(LOG_PATH, "r") as log_file:
+                    # Extract and write data
+                    extract_data(input_df, ['product details', 'product'], 4, 'F')
+                    extract_data(input_df, ['brand'], 4, 'G')
+                    extract_data(input_df, ['price'], 4, 'H')
+                    extract_data(input_df, ['revenue'], 4, 'I')
+
+                    # Format revenue cells
+                    for i in range(4, 14):
+                        cell = worksheet[f"I{i}"]
+                        if cell.value is not None:
+                            try:
+                                cleaned_value = str(cell.value).replace(",", "")
+                                numeric_value = float(cleaned_value)
+                                cell.value = numeric_value
+                                cell.number_format = '$#,##0.00'
+                            except ValueError:
+                                st.warning(f"Cell I{i} contains non-numeric data: {cell.value}")
+
+                    # Save the workbook
+                    workbook.save(output_filepath)
+
+                    # Upload to Google Drive
+                    file_id = drive_service.upload_file(str(output_filepath), output_filename)
+
+                    if file_id:
+                        st.success(f"✅ File generated and uploaded successfully!")
+                        
+                        # Provide download button
+                        with open(output_filepath, "rb") as file:
+                            st.download_button(
+                                label="Download Excel File",
+                                data=file,
+                                file_name=output_filename,
+                                key='download_button'
+                            )
+                    else:
+                        st.warning("File generated but couldn't be uploaded to Google Drive")
+                        
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
+
+        # Display log in sidebar
+        st.sidebar.title("Generated Files Log")
+        log_path = Path("generated_files_log.json")
+        if log_path.exists():
+            with open(log_path, "r") as log_file:
                 log_data = json.load(log_file)
             for entry in reversed(log_data):
-                st.sidebar.markdown(
-                    f"""
-                    **File:** {entry['filename']}  
-                    **Date:** {entry['timestamp']}
-                    ---
-                    """
-                )
+                st.sidebar.write(f"Keyword: {entry['keyword']} | File: {entry['filename']} | Date: {entry['timestamp']}")
         else:
-            st.sidebar.info("No files have been generated yet.")
+            st.sidebar.write("No files have been generated yet.")
 
     except Exception as e:
-        error_msg = f"❌ An unexpected error occurred: {str(e)}"
-        logger.error(error_msg)
-        st.error(error_msg)
+        logger.error(f"Application error: {str(e)}")
+        st.error(f"An unexpected error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()
