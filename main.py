@@ -79,6 +79,25 @@ def process_excel_file(input_df: pd.DataFrame, keyword: str) -> Tuple[bool, str,
         logger.error(error_msg)
         return False, error_msg, None
 
+def update_log_file(log_entry: Dict[str, Any]) -> bool:
+    """Update the log file with new entry"""
+    try:
+        if os.path.exists(LOG_PATH):
+            with open(LOG_PATH, "r") as log_file:
+                log_data = json.load(log_file)
+        else:
+            log_data = []
+            
+        log_data.append(log_entry)
+        
+        with open(LOG_PATH, "w") as log_file:
+            json.dump(log_data, log_file, indent=4)
+            
+        return True
+    except Exception as e:
+        logger.error(f"Error updating log file: {str(e)}")
+        return False
+
 def main():
     """Main application entry point"""
     try:
@@ -116,28 +135,62 @@ def main():
                 st.warning("Please upload a CSV file before generating.")
             else:
                 try:
-                    # Process the uploaded file
-                    input_df = pd.read_csv(uploaded_file)
-                    success, result, output_filename = process_excel_file(input_df, keyword)
-                    
-                    if success:
-                        st.success(f"File generated successfully: {output_filename}")
+                    with st.spinner("Processing file and uploading to Google Drive..."):
+                        # Process the uploaded file
+                        input_df = pd.read_csv(uploaded_file)
+                        success, filepath, filename = process_excel_file(input_df, keyword)
                         
-                        # Provide download button
-                        with open(result, "rb") as file:
-                            st.download_button(
-                                label="Download Excel File",
-                                data=file,
-                                file_name=output_filename,
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                key='download_button'
-                            )
-                    else:
-                        st.error(f"Failed to generate file: {result}")
-                        
+                        if success:
+                            # Upload to Google Drive
+                            upload_success, upload_message, file_id = drive_service.upload_file(filepath, filename)
+                            
+                            if upload_success:
+                                # Create log entry
+                                log_entry = {
+                                    "keyword": keyword,
+                                    "filename": filename,
+                                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d"),
+                                    "storage_path": filepath,
+                                    "drive_file_id": file_id
+                                }
+                                
+                                # Update log file
+                                if update_log_file(log_entry):
+                                    st.success(f"File generated and uploaded successfully: {filename}")
+                                    
+                                    # Provide download button
+                                    with open(filepath, "rb") as file:
+                                        st.download_button(
+                                            label="Download Excel File",
+                                            data=file,
+                                            file_name=filename,
+                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                            key='download_button'
+                                        )
+                                else:
+                                    st.warning("File processed but log update failed")
+                            else:
+                                st.error(f"Failed to upload file to Google Drive: {upload_message}")
+                        else:
+                            st.error(f"Failed to generate file: {filepath}")
+                            
                 except Exception as e:
                     st.error(f"Error processing file: {str(e)}")
                     logger.error(f"File processing error: {str(e)}")
+        
+        # Display log in sidebar
+        st.sidebar.title("Generated Files Log")
+        if os.path.exists(LOG_PATH):
+            with open(LOG_PATH, "r") as log_file:
+                log_data = json.load(log_file)
+            for entry in reversed(log_data):
+                st.sidebar.write(
+                    f"Keyword: {entry['keyword']} | "
+                    f"File: {entry['filename']} | "
+                    f"Date: {entry['timestamp']}"
+                )
+        else:
+            st.sidebar.write("No files have been generated yet.")
         
     except Exception as e:
         logger.error(f"Application error: {str(e)}")

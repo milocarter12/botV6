@@ -156,4 +156,115 @@ class GoogleDriveService:
             logger.error(error_msg)
             return False, error_msg
 
-    # ... rest of the class implementation remains the same ...
+    def create_or_get_folder(self) -> Tuple[bool, str, Optional[str]]:
+        """Create or get the root folder ID for the application."""
+        try:
+            logger.info(f"Looking for root folder: {self.root_folder_name}")
+            
+            # Search for existing folder
+            query = f"name='{self.root_folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
+            results = self.drive_service.files().list(q=query, spaces='drive').execute()
+            items = results.get('files', [])
+
+            if items:
+                folder_id = items[0]['id']
+                logger.info(f"Found existing folder with ID: {folder_id}")
+                self.root_folder_id = folder_id
+                return True, "Folder found", folder_id
+
+            # Create new folder if it doesn't exist
+            folder_metadata = {
+                'name': self.root_folder_name,
+                'mimeType': 'application/vnd.google-apps.folder'
+            }
+            
+            file = self.drive_service.files().create(
+                body=folder_metadata,
+                fields='id'
+            ).execute()
+            
+            folder_id = file.get('id')
+            logger.info(f"Created new folder with ID: {folder_id}")
+            
+            # Share the folder with the user
+            self._share_file(folder_id)
+            
+            self.root_folder_id = folder_id
+            return True, "Folder created", folder_id
+
+        except Exception as e:
+            error_msg = f"Error creating/getting folder: {str(e)}"
+            logger.error(error_msg)
+            return False, error_msg, None
+
+    def _share_file(self, file_id: str) -> bool:
+        """Share a file with the specified user email."""
+        try:
+            permission = {
+                'type': 'user',
+                'role': 'writer',
+                'emailAddress': self.user_email
+            }
+            
+            self.drive_service.permissions().create(
+                fileId=file_id,
+                body=permission,
+                sendNotificationEmail=False
+            ).execute()
+            
+            logger.info(f"Successfully shared file {file_id} with {self.user_email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error sharing file {file_id}: {str(e)}")
+            return False
+
+    def upload_file(self, file_path: str, file_name: str) -> Tuple[bool, str, Optional[str]]:
+        """Upload a file to Google Drive and share it."""
+        try:
+            logger.info(f"Starting upload for file: {file_name}")
+            
+            # Ensure we have a root folder
+            folder_success, folder_msg, folder_id = self.create_or_get_folder()
+            if not folder_success:
+                return False, f"Failed to get/create root folder: {folder_msg}", None
+            
+            # Prepare file metadata
+            file_metadata = {
+                'name': file_name,
+                'parents': [folder_id]
+            }
+            
+            # Upload file
+            try:
+                with open(file_path, 'rb') as file:
+                    media = MediaIoBaseUpload(
+                        file,
+                        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        resumable=True
+                    )
+                    
+                    file = self.drive_service.files().create(
+                        body=file_metadata,
+                        media_body=media,
+                        fields='id'
+                    ).execute()
+                    
+                    file_id = file.get('id')
+                    logger.info(f"File uploaded successfully with ID: {file_id}")
+                    
+                    # Share the file
+                    if self._share_file(file_id):
+                        return True, "File uploaded and shared successfully", file_id
+                    else:
+                        return False, "File uploaded but sharing failed", file_id
+                    
+            except Exception as e:
+                error_msg = f"Error uploading file: {str(e)}"
+                logger.error(error_msg)
+                return False, error_msg, None
+                
+        except Exception as e:
+            error_msg = f"Error in upload process: {str(e)}"
+            logger.error(error_msg)
+            return False, error_msg, None

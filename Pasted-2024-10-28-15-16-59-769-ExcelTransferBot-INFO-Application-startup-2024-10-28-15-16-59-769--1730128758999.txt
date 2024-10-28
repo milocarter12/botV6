@@ -1,0 +1,99 @@
+2024-10-28 15:16:59,769 - ExcelTransferBot - INFO - Application startup
+
+2024-10-28 15:16:59,769 - ExcelTransferBot - INFO - Starting Excel Data Transfer Bot application
+
+2024-10-28 15:16:59,879 - GoogleDriveService - INFO - Starting Google Drive authentication
+
+2024-10-28 15:16:59,879 - GoogleDriveService - INFO - All required environment variables are present
+
+2024-10-28 15:16:59,880 - GoogleDriveService - INFO - Validating private key format
+
+2024-10-28 15:16:59,880 - GoogleDriveService - INFO - Private key validation successful
+
+2024-10-28 15:16:59,880 - GoogleDriveService - INFO - Service account info prepared successfully
+
+2024-10-28 15:16:59,881 - GoogleDriveService - INFO - Successfully created credentials
+
+2024-10-28 15:16:59,886 - googleapiclient.discovery_cache - INFO - file_cache is only supported with oauth2client<4.0.0
+
+2024-10-28 15:16:59,888 - GoogleDriveService - INFO - Successfully initialized Drive API service
+
+2024-10-28 15:17:19,795 - ExcelTransferBot - INFO - Application startup
+
+2024-10-28 15:17:19,795 - ExcelTransferBot - INFO - Starting Excel Data Transfer Bot application
+
+2024-10-28 15:17:19,796 - GoogleDriveService - INFO - Starting Google Drive authentication
+
+2024-10-28 15:17:19,796 - GoogleDriveService - INFO - All required environment variables are present
+
+2024-10-28 15:17:19,796 - GoogleDriveService - INFO - Validating private key format
+
+2024-10-28 15:17:19,796 - GoogleDriveService - INFO - Private key validation successful
+
+2024-10-28 15:17:19,796 - GoogleDriveService - INFO - Service account info prepared successfully
+
+2024-10-28 15:17:19,797 - GoogleDriveService - INFO - Successfully created credentials
+
+2024-10-28 15:17:19,801 - googleapiclient.discovery_cache - INFO - file_cache is only supported with oauth2client<4.0.0
+
+2024-10-28 15:17:19,803 - GoogleDriveService - INFO - Successfully initialized Drive API service
+
+2024-10-28 15:17:25,180 - ExcelTransferBot - INFO - Application startup
+
+2024-10-28 15:17:25,180 - ExcelTransferBot - INFO - Starting Excel Data Transfer Bot application
+
+2024-10-28 15:17:25,182 - GoogleDriveService - INFO - Starting Google Drive authentication
+
+2024-10-28 15:17:25,182 - GoogleDriveService - INFO - All required environment variables are present
+
+2024-10-28 15:17:25,182 - GoogleDriveService - INFO - Validating private key format
+
+2024-10-28 15:17:25,182 - GoogleDriveService - INFO - Private key validation successful
+
+2024-10-28 15:17:25,182 - GoogleDriveService - INFO - Service account info prepared successfully
+
+2024-10-28 15:17:25,183 - GoogleDriveService - INFO - Successfully created credentials
+
+2024-10-28 15:17:25,186 - googleapiclient.discovery_cache - INFO - file_cache is only supported with oauth2client<4.0.0
+
+2024-10-28 15:17:25,188 - GoogleDriveService - INFO - Successfully initialized Drive API service
+
+2024-10-28 15:17:26,578 - ExcelTransferBot - INFO - Application startup
+
+2024-10-28 15:17:26,578 - ExcelTransferBot - INFO - Starting Excel Data Transfer Bot application
+
+2024-10-28 15:17:26,579 - GoogleDriveService - INFO - Starting Google Drive authentication
+
+2024-10-28 15:17:26,579 - GoogleDriveService - INFO - All required environment variables are present
+
+2024-10-28 15:17:26,579 - GoogleDriveService - INFO - Validating private key format
+
+2024-10-28 15:17:26,579 - GoogleDriveService - INFO - Private key validation successful
+
+2024-10-28 15:17:26,579 - GoogleDriveService - INFO - Service account info prepared successfully
+
+2024-10-28 15:17:26,580 - GoogleDriveService - INFO - Successfully created credentials
+
+2024-10-28 15:17:26,583 - googleapiclient.discovery_cache - INFO - file_cache is only supported with oauth2client<4.0.0
+
+2024-10-28 15:17:26,585 - GoogleDriveService - INFO - Successfully initialized Drive API service
+
+2024-10-28 15:17:28,606 - ExcelTransferBot - INFO - Application startup
+
+2024-10-28 15:17:28,606 - ExcelTransferBot - INFO - Starting Excel Data Transfer Bot application
+
+2024-10-28 15:17:28,607 - GoogleDriveService - INFO - Starting Google Drive authentication
+
+2024-10-28 15:17:28,607 - GoogleDriveService - INFO - All required environment variables are present
+
+2024-10-28 15:17:28,607 - GoogleDriveService - INFO - Validating private key format
+
+2024-10-28 15:17:28,607 - GoogleDriveService - INFO - Private key validation successful
+
+2024-10-28 15:17:28,608 - GoogleDriveService - INFO - Service account info prepared successfully
+
+2024-10-28 15:17:28,609 - GoogleDriveService - INFO - Successfully created credentials
+
+2024-10-28 15:17:28,613 - googleapiclient.discovery_cache - INFO - file_cache is only supported with oauth2client<4.0.0
+
+2024-10-28 15:17:28,616 - GoogleDriveService - INFO - Successfully initialized Drive API service
