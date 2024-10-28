@@ -6,16 +6,18 @@ import datetime
 import os
 import json
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from openpyxl.utils import get_column_letter
 from pathlib import Path
 from google_drive_service import GoogleDriveService
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger('ExcelTransferBot')
 
-# Health check endpoint for cloud deployment
 @st.cache_data
 def health_check():
     """Health check endpoint for cloud deployment"""
@@ -34,6 +36,31 @@ def health_check():
             "timestamp": datetime.datetime.now().isoformat()
         }
 
+def check_environment() -> Tuple[bool, str]:
+    """Check if all required environment variables are properly set."""
+    try:
+        required_vars = [
+            "GOOGLE_SERVICE_ACCOUNT_TYPE",
+            "GOOGLE_PROJECT_ID",
+            "GOOGLE_PRIVATE_KEY_ID",
+            "GOOGLE_PRIVATE_KEY",
+            "GOOGLE_CLIENT_EMAIL",
+            "GOOGLE_CLIENT_ID",
+            "GOOGLE_AUTH_URI",
+            "GOOGLE_TOKEN_URI",
+            "GOOGLE_AUTH_PROVIDER_X509_CERT_URL",
+            "GOOGLE_CLIENT_X509_CERT_URL"
+        ]
+
+        missing_vars = [var for var in required_vars if not os.environ.get(var)]
+        
+        if missing_vars:
+            return False, f"Missing environment variables: {', '.join(missing_vars)}"
+            
+        return True, "Environment check passed"
+    except Exception as e:
+        return False, f"Environment check failed: {str(e)}"
+
 def main():
     try:
         # Set page configuration
@@ -42,6 +69,13 @@ def main():
             layout="wide",
             initial_sidebar_state="expanded"
         )
+
+        # Check environment
+        env_ok, env_message = check_environment()
+        if not env_ok:
+            st.error(f"Environment configuration error: {env_message}")
+            logger.error(f"Environment error: {env_message}")
+            return
 
         # Display health check status
         if st.sidebar.checkbox("Show Health Status", value=False):
@@ -55,7 +89,8 @@ def main():
         auth_success, auth_message = drive_service.authenticate()
         
         if not auth_success:
-            st.error(f"Failed to authenticate with Google Drive: {auth_message}")
+            st.error(f"Google Drive authentication failed: {auth_message}")
+            logger.error(f"Authentication error: {auth_message}")
             return
 
         # Step 1: User inputs keyword
