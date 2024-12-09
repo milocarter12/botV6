@@ -1,4 +1,40 @@
-streamlit==1.29.0
+streamlit
+pandas
+openpyxl
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+python-dotenv[tool.poetry]
+name = "excel-data-transfer-bot"
+version = "0.1.0"
+description = "A Streamlit application for Excel data transfer"
+authors = ["Your Name"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+streamlit = "^1.31.0"
+pandas = "^2.2.0"
+openpyxl = "^3.1.2"
+google-api-python-client = "^2.118.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
+python-dotenv = "^1.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"modules = ["python-3.12", "poetry-0.1.0"]
+run = "poetry run streamlit run main.py"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "poetry run streamlit run main.py"]
+deploymentTarget = "cloudrun"
+
+[poetry]
+directory = "."poetry init
+poetry installstreamlit==1.29.0
 pandas==2.1.4
 openpyxl==3.1.2
 google-auth==2.25.2
